@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'ques_set.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+
+QuesSet quesSet = new QuesSet();
 
 void main() => runApp(Quizzler());
 
@@ -25,34 +29,48 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
-  //to track question number
-  int questionIndex = 0;
-
   //list of icons as per score
   List<Icon> scoreIcons = [];
 
-  //list of questions
-  List<String> questions = [
-    'ques 1',
-    'ques 2',
-    'ques 3',
-    'ques 4',
-  ];
+  //track user score
+  int userScore = 0;
 
-  void addIcon(bool userAnswer) {
-    if (userAnswer == answers[questionIndex])
+  //function to add icon to score list
+  void addScoreIcon(bool userAnswer) {
+    //correct answer
+    if (userAnswer == quesSet.getCorrectAnswer()) {
+      userScore++;
       scoreIcons.add(Icon(Icons.check, color: Colors.green));
-    else
+    }
+    //incorrect answer
+    else {
       scoreIcons.add(Icon(Icons.close, color: Colors.red));
+    }
   }
 
-  //list of respective answers
-  List<bool> answers = [
-    true,
-    false,
-    false,
-    true,
-  ];
+  //new checking answer method
+  void checkAnswer(bool userAnswer) {
+    setState(() {
+      //add score icon as per user answer
+      addScoreIcon(userAnswer);
+      //if quiz is finished
+      if (quesSet.isFinished()) {
+        //pop-up an alert to show the end of quiz
+        Alert(
+          context: context,
+          title: "Finished!",
+          desc: "Quiz ended",
+          content: Text('Your score is $userScore'),
+        ).show();
+        //clear the score and score icons
+        scoreIcons.clear();
+        userScore = 0;
+      } else {
+        //change the question
+        quesSet.nextQuestion();
+      }
+    });
+  }
 
   //to build function of same type
   Expanded buildBoolButton(String text, Color color, bool userAnswer) {
@@ -61,11 +79,7 @@ class _QuizPageState extends State<QuizPage> {
         padding: const EdgeInsets.all(15.0),
         child: FlatButton(
           onPressed: () {
-            addIcon(userAnswer);
-            setState(() {
-              questionIndex++;
-            });
-            print('button pressed');
+            checkAnswer(userAnswer);
           },
           color: color,
           child: Text(
@@ -86,21 +100,26 @@ class _QuizPageState extends State<QuizPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        //display question text
         Expanded(
           flex: 5,
           child: Center(
             child: Text(
-              questions[questionIndex],
+              quesSet.getQuestionText(),
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 25.0,
+                fontSize: 20.0,
               ),
             ),
           ),
         ),
+        //display true button
         buildBoolButton('True', Colors.green, true),
+        //display false button
         buildBoolButton('False', Colors.red, false),
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: scoreIcons,
         ),
       ],
